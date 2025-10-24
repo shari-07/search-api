@@ -195,7 +195,9 @@ export default async function transformTaobaoProduct(taobaoResponse: any, lang?:
     // Step 2: Save the untranslated data to Redis cache.
     // The key ensures we cache per product ID.
     const cacheKey = `zh:product:taobao:${untranslatedData.data.product_item_id}`;
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(untranslatedData));
+    if (redis) {
+      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(untranslatedData));
+    }
 
     // Step 3: If a language is specified, apply translations.
     if (lang && lang !== 'zh-CN') { // Assuming 'zh-CN' is the source, no translation needed

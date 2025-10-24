@@ -144,7 +144,7 @@ export async function getProductDetails(ctx: Context) {
 
   try {
     // 1. Check Redis for a cached response
-    const cachedData = await redis.get(cacheKey);
+    const cachedData = redis ? await redis.get(cacheKey) : null;
     if (cachedData) {
       isCached = true;
       statusCode = 200;
@@ -299,7 +299,9 @@ export async function getProductDetails(ctx: Context) {
     }
 
     // 3. Cache the successful result before returning
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(productData));
+    if (redis) {
+      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(productData));
+    }
     statusCode = 200;
     statusText = 'Success (API Fetch & Cached)';
     logMessage = `[Cache] SET for ${cacheKey}`;
