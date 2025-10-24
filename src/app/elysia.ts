@@ -60,7 +60,8 @@ function isLikelyProxy(request: Request): boolean {
 
 export const app = new Elysia({
   serve: {
-    port: 3000,
+    port: parseInt(process.env.PORT || '3000'),
+    hostname: '0.0.0.0',
     idleTimeout: 255
   }
 })
@@ -89,5 +90,7 @@ export const app = new Elysia({
   })
   .use(productRoutes)
   .use(imageRoute)
+  .get('/', () => ({ status: 'ok', message: 'Product Search API is running' }))
+  .get('/health', () => ({ status: 'healthy', timestamp: new Date().toISOString() }))
 
   // You can define additional routes here
