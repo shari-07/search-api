@@ -90,7 +90,23 @@ export const app = new Elysia({
   })
   .use(productRoutes)
   .use(imageRoute)
-  .get('/', () => ({ status: 'ok', message: 'Product Search API is running' }))
-  .get('/health', () => ({ status: 'healthy', timestamp: new Date().toISOString() }))
+  .get('/', () => {
+    console.log('🏥 Health check hit - Root endpoint');
+    return { 
+      status: 'ok', 
+      message: 'Product Search API is running',
+      timestamp: new Date().toISOString(),
+      port: process.env.PORT || '3000'
+    };
+  })
+  .get('/health', () => {
+    console.log('🏥 Health check hit - Health endpoint');
+    return { 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      port: process.env.PORT || '3000',
+      redis: process.env.REDIS_URL ? 'configured' : 'not configured'
+    };
+  })
 
   // You can define additional routes here
