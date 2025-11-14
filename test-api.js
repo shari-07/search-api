@@ -122,4 +122,17 @@ runAllTests().catch(error => {
 curl "http://localhost:3000/product/details?platform=taobao&id=976965730448"
 curl "http://localhost:3000/product/details?platform=micro&id=7272754802"
 curl "http://localhost:3000/product/details?platform=1688&id=977208207464"
+
+
+curl "https://search-api-production-432f.up.railway.app/product/details?platform=1688&id=977208207464"
+curl "https://shariyy.com/product/details?platform=1688&id=977208207464"
+
+curl "http://search-api-production-432f.up.railway.app/product/details?platform=micro&id=7272754802"
+curl "https://shariyy.com/product/details?platform=micro&id=7272754802"
+
+
+curl "https://search-api-production-432f.up.railway.app/product/details?platform=taobao&id=976965730448"
+curl "https://shariyy.com/product/details?platform=taobao&id=976965730448"
+
+
 */
