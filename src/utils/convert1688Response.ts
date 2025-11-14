@@ -46,9 +46,7 @@ export default async function transform1688Product(apiResponse: any): Promise<an
                 propGroup.prop_list.push({
                     p_value: pValue,
                     p_name: valueName,
-                    p_sku_img: prop.skuImageUrl,
-
-                    //p_sku_img: prop.skuImageUrl ? `https://api-product.eddarif.com/image/image-proxy?url=${prop.skuImageUrl}` : "",
+                    p_sku_img: prop.skuImageUrl ? `https://shariyy.com/image/image-proxy?url=${prop.skuImageUrl}` : "",
                 });
             }
 
