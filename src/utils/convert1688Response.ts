@@ -71,11 +71,12 @@ export default async function transform1688Product(apiResponse: any): Promise<an
     }
 
     let description = sourceData.description || "";
-    /*
+    
     description = description.replace(/<img[^>]+src=\"(https:\/\/[^\"]+)\"[^>]*>/g, (match: string, url: string) => {
-        return `<img src=\"https://api-product.eddarif.com/image/image-proxy?url=${url}\"/>`;
+        return `<img src=\"https://shariyy.com/image/image-proxy?url=${url}\"/>`;
     });
-    */
+
+    
     description = description.match(/<img[^>]+>/g)?.join('') || "";
 
     const firstSkuPrice = parseFloat(skuInfoList[0]?.price || "0");
@@ -85,10 +86,8 @@ export default async function transform1688Product(apiResponse: any): Promise<an
         code: 0,
         msg: "Success",
         data: {
-            //product_image_url: `https://api-product.eddarif.com/image/image-proxy?url=${picUrls[0]}` || "",
-            product_image_url: `${picUrls[0]}` || "",
-            //product_image_list: picUrls.map((url: string) => ({ url: `https://api-product.eddarif.com/image/image-proxy?url=${url}` })),
-            product_image_list: picUrls,
+            product_image_url: `https://shariyy.com/image/image-proxy?url=${picUrls[0]}` || "",
+            product_image_list: picUrls.map((url: string) => ({ url: `https://shariyy.com/image/image-proxy?url=${url}` })),
             product_name: sourceData.subjectTrans || sourceData.subject,
             product_link: sourceData.promotionUrl || `https://detail.1688.com/offer/${sourceData.offerId}.html`,
             product_details: description,
