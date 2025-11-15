@@ -1,6 +1,6 @@
 import { translate } from "../services/translateService";
-import { redis } from "../config/redis";
-const CACHE_TTL = 43200; 
+import { cache } from "../config/cache";
+const CACHE_TTL = 24 * 60 * 60; // 48 hours 
 /**
  * Transforms raw Taobao data into a structured format without translation.
  * This function is pure and only focuses on structuring the data.
@@ -195,9 +195,7 @@ export default async function transformTaobaoProduct(taobaoResponse: any, lang?:
     // Step 2: Save the untranslated data to Redis cache.
     // The key ensures we cache per product ID.
     const cacheKey = `zh:product:taobao:${untranslatedData.data.product_item_id}`;
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(untranslatedData));
-    }
+    await cache.set(cacheKey, untranslatedData, CACHE_TTL);
 
     // Step 3: If a language is specified, apply translations.
     if (lang && lang !== 'zh-CN') { // Assuming 'zh-CN' is the source, no translation needed

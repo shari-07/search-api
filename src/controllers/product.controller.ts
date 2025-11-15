@@ -1,5 +1,5 @@
 import type { Context } from 'elysia';
-import { redis } from '../config/redis';
+import { cache } from '../config/cache';
 import TaobaoAPI from '../services/TaobaoAPI';
 import convertTaobaoResponse from '../utils/convertTaobaoResponse';
 import { AlibabaFenxiaoCrossborderAPI } from '../services/1688API';
@@ -144,7 +144,7 @@ export async function getProductDetails(ctx: Context) {
 
   try {
     // 1. Check Redis for a cached response
-    const cachedData = redis ? await redis.get(cacheKey) : null;
+    const cachedData = await cache.get(cacheKey);
     if (cachedData) {
       isCached = true;
       statusCode = 200;
@@ -174,7 +174,7 @@ export async function getProductDetails(ctx: Context) {
           }]
       });
 
-      return JSON.parse(cachedData);
+      return cachedData;
     }
 
     logMessage = `[Cache] MISS for ${cacheKey}. Fetching from API...`;
@@ -299,9 +299,7 @@ export async function getProductDetails(ctx: Context) {
     }
 
     // 3. Cache the successful result before returning
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(productData));
-    }
+    await cache.set(cacheKey, productData, CACHE_TTL);
     statusCode = 200;
     statusText = 'Success (API Fetch & Cached)';
     logMessage = `[Cache] SET for ${cacheKey}`;
