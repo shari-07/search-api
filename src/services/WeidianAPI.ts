@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { translate } from './translateService';
 
 // -------------------------------------------------------------------
 // 1. TYPE DEFINITIONS for the FINAL STRUCTURED DATA
@@ -231,7 +230,6 @@ export async function transformWeidianProduct(
     descriptionData: ApiDescriptionResult | null,
     lang?: string
 ): Promise<ProductDetails> {
-    const currentLang = lang || 'en';
     const cnyToUsdRate = 0.14; // Approximate conversion rate
 
     // --- Input Validation ---
@@ -251,18 +249,6 @@ export async function transformWeidianProduct(
         };
     }
 
-    // --- Translation Data Collection Phase ---
-    const translationPromises: Promise<string>[] = [];
-    const translationKeys: string[] = []; // Stores unique identifiers for translated strings
-    const queueTranslation = (text: string | null | undefined, keyPrefix: string): string | null => {
-        if (typeof text === 'string' && text.trim() !== '') {
-            const uniqueKey = `${keyPrefix}`;
-            translationPromises.push(translate(text, currentLang));
-            translationKeys.push(uniqueKey);
-            return uniqueKey;
-        }
-        return null;
-    };
 
     // --- 1. Process Description into HTML (No Translation Needed Here) ---
     let productDetailsHtml = "";
@@ -288,31 +274,26 @@ export async function transformWeidianProduct(
         const originalAttributeValueMap = new Map<number, { name: string; type: string }>();
         const tempPropListStructure: {
             originalAttrTitle: string;
-            translatedAttrTitleKey: string | null;
             tempAttrValues: {
                 p_value: string;
                 originalAttrValue: string;
-                translatedAttrValueKey: string | null;
                 p_sku_img: string;
             }[];
         }[] = [];
 
         detailsData.attrList.forEach((attrGroup) => {
             const originalAttrTitle = attrGroup.attrTitle || '';
-            const translatedAttrTitleKey = queueTranslation(originalAttrTitle, `attrTitle_${attrGroup.attrTitle}`); // Use a more stable key
-            const tempAttrValues: { p_value: string; originalAttrValue: string; translatedAttrValueKey: string | null; p_sku_img: string; }[] = [];
+            const tempAttrValues: { p_value: string; originalAttrValue: string; p_sku_img: string; }[] = [];
             attrGroup.attrValues.forEach((val) => {
                 const originalAttrValue = val.attrValue || '';
-                const translatedAttrValueKey = queueTranslation(originalAttrValue, `attrValue_${val.attrId}`);
                 originalAttributeValueMap.set(val.attrId, { name: originalAttrValue, type: originalAttrTitle });
                 tempAttrValues.push({
                     p_value: val.attrId.toString(),
                     originalAttrValue: originalAttrValue,
-                    translatedAttrValueKey: translatedAttrValueKey,
                     p_sku_img: val.img || "",
                 });
             });
-            tempPropListStructure.push({ originalAttrTitle, translatedAttrTitleKey, tempAttrValues });
+            tempPropListStructure.push({ originalAttrTitle, tempAttrValues });
         });
         
         // This is a temporary structure that will be populated post-translation
@@ -337,7 +318,6 @@ export async function transformWeidianProduct(
                 .map(id => originalAttributeValueMap.get(id)?.name || '')
                 .filter(Boolean)
                 .join('; ');
-            queueTranslation(originalPropertiesName, `propertiesName_${skuKey}`);
             const price = parseFloat((sku.skuInfo.discountPrice / 100).toFixed(2));
             skuList[skuKey] = {
                 price,
@@ -352,40 +332,16 @@ export async function transformWeidianProduct(
     }
     // If the `if` block was skipped, `finalPropList`, `skuList`, and `props_list_origin` remain empty.
 
-    // Collect product title for translation (independent of SKUs)
-    const productTitleOriginal = detailsData.itemTitle || '';
-    const productTitleTranslatedKey = queueTranslation(productTitleOriginal, 'productTitle');
-
-    // --- 3. Execute all collected translations in parallel ---
-    const translatedResults = await Promise.all(translationPromises);
-    const translatedMap = new Map<string, string>();
-    translationKeys.forEach((key, index) => {
-        translatedMap.set(key, translatedResults[index] ?? '');
-    });
-
-    // --- 4. Apply Translated Values Back to Structures ---
+    // --- 3. Apply Values to Structures ---
     // These loops will not run if finalPropList and skuList are empty, making them safe.
     finalPropList.forEach(propGroup => {
-        const translatedPropName = translatedMap.get(`attrTitle_${propGroup.prop_type}`) ?? propGroup.prop_name;
-        propGroup.prop_name = translatedPropName;
-        propGroup.prop_list.forEach(propValue => {
-            propValue.p_name = translatedMap.get(`attrValue_${propValue.p_value}`) ?? propValue.p_name;
-            // Clear image for size-related properties
-            if (["尺码", "size", "taille", "tamaño"].includes(translatedPropName.toLocaleLowerCase())) {
+        // Clear image for size-related properties
+        if (["尺码", "size", "taille", "tamaño"].includes(propGroup.prop_name.toLocaleLowerCase())) {
+            propGroup.prop_list.forEach(propValue => {
                 propValue.p_sku_img = "";
-            }
-        });
-    });
-
-    for (const skuKey in skuList) {
-        if (Object.prototype.hasOwnProperty.call(skuList, skuKey)) {
-            const translatedName = translatedMap.get(`propertiesName_${skuKey}`);
-            if (translatedName) {
-                // @ts-ignore
-                skuList[skuKey].properties_name = translatedName;
-            }
+            });
         }
-    }
+    });
     
     // Generate origin_list from the final translated propList
     for (const propGroup of finalPropList) {
@@ -414,7 +370,7 @@ export async function transformWeidianProduct(
         data: {
             product_image_url: uniqueImages[0] || "",
             product_image_list: uniqueImages.map(url => ({ url })),
-            product_name: translatedMap.get(productTitleTranslatedKey ?? '') ?? productTitleOriginal,
+            product_name: detailsData.itemTitle || '',
             product_link: `https://weidian.com/item.html?itemID=${detailsData.itemId}`,
             product_details: productDetailsHtml,
             product_freight_amount_cny: 10,

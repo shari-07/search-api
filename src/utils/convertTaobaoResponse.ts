@@ -1,4 +1,3 @@
-import { translate } from "../services/translateService";
 import { cache } from "../config/cache";
 const CACHE_TTL = 24 * 60 * 60; // 48 hours 
 /**
@@ -100,84 +99,15 @@ function transformRawTaobaoData(sourceData: any): any {
     };
 }
 
-/**
- * Applies translations to a transformed, untranslated product object.
- * @param untranslatedProduct The structured product data with original text.
- * @param lang The target language code (e.g., 'en').
- * @returns A new product object with all text fields translated.
- */
-async function applyTranslations(untranslatedProduct: any, lang: string): Promise<any> {
-    // Deep clone the object to avoid mutating the cached version
-    const translatedProduct = JSON.parse(JSON.stringify(untranslatedProduct));
-    
-    const translationPromises: Promise<string>[] = [];
-    const translationKeys: string[] = [];
-    const translatedMap = new Map<string, string>();
-
-    // 1. Collect all strings that need translation
-    translationPromises.push(translate(translatedProduct.data.product_name, lang));
-    translationKeys.push("product_title");
-
-    translatedProduct.data.prop_list.forEach((propGroup: any) => {
-        const propId = propGroup.prop_type;
-        if (propGroup.prop_name) {
-            translationPromises.push(translate(propGroup.prop_name, lang));
-            translationKeys.push(`prop_name_${propId}`);
-        }
-        propGroup.prop_list.forEach((prop_item: any) => {
-            if (prop_item.p_name) {
-                translationPromises.push(translate(prop_item.p_name, lang));
-                translationKeys.push(`value_name_${prop_item.p_value}`);
-            }
-        });
-    });
-
-    // 2. Await all translations
-    const translatedResults = await Promise.all(translationPromises);
-    translationKeys.forEach((key, index) => {
-        translatedMap.set(key, translatedResults[index] ?? ''); // Use nullish coalescing for safety
-    });
-
-    // 3. Apply translations back to the cloned object
-    translatedProduct.data.product_name = translatedMap.get("product_title") || translatedProduct.data.product_name;
-
-    translatedProduct.data.prop_list.forEach((propGroup: any) => {
-        const propId = propGroup.prop_type;
-        propGroup.prop_name = translatedMap.get(`prop_name_${propId}`) || propGroup.prop_name;
-
-        propGroup.prop_list.forEach((prop_item: any) => {
-            prop_item.p_name = translatedMap.get(`value_name_${prop_item.p_value}`) || prop_item.p_name;
-        });
-    });
-    
-    // 4. Reconstruct translated properties_name for each SKU and update props_list_origin
-    const newOriginList: { [key: string]: any } = {};
-    translatedProduct.data.prop_list.forEach((prop: any) => {
-        prop.prop_list.forEach((item: any) => {
-            newOriginList[item.p_value] = `${prop.prop_name}:${item.p_name}`;
-        });
-    });
-    translatedProduct.data.props_list_origin = newOriginList;
-
-    for (const skuKey in translatedProduct.data.sku_list) {
-        const sku = translatedProduct.data.sku_list[skuKey];
-        const translatedPropNames = sku.properties.split(';')
-            .map((pValue: string) => newOriginList[pValue] || '')
-            .join(';');
-        sku.properties_name = translatedPropNames;
-    }
-
-    return translatedProduct;
-}
 
 
 /**
- * Main function: Converts raw Taobao API data into a structured and translated format,
- * while caching the untranslated version.
+ * Main function: Converts raw Taobao API data into a structured format,
+ * while caching the data.
  * @param taobaoResponse The JSON response from the Taobao product API.
- * @param lang The target language for translation.
+ * @param lang The target language (deprecated, no longer used).
  * @param cached Whether the initial data was from cache (for response metadata).
- * @returns A structured and translated JSON object with product details.
+ * @returns A structured JSON object with product details.
  */
 export default async function transformTaobaoProduct(taobaoResponse: any, lang?: string, cached?: boolean): Promise<any> {
     if (!taobaoResponse || !taobaoResponse.item_id) {
@@ -197,12 +127,6 @@ export default async function transformTaobaoProduct(taobaoResponse: any, lang?:
     const cacheKey = `zh:product:taobao:${untranslatedData.data.product_item_id}`;
     await cache.set(cacheKey, untranslatedData, CACHE_TTL);
 
-    // Step 3: If a language is specified, apply translations.
-    if (lang && lang !== 'zh-CN') { // Assuming 'zh-CN' is the source, no translation needed
-        const translatedData = await applyTranslations(untranslatedData, lang);
-        return translatedData;
-    }
-
-    // Step 4: If no translation is needed, return the untranslated (but structured) data.
+    // Return the untranslated (but structured) data.
     return untranslatedData;
 }

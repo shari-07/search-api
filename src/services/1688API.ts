@@ -98,15 +98,12 @@ export class AlibabaFenxiaoCrossborderAPI {
 
         const requestUrl = `${this.apiBaseUrl}${urlPath}?${queryParams.toString()}`;
 
-        console.log(`Requesting URL: ${requestUrl}`);
-
         try {
-            // Make a POST request to the constructed URL.
+            // Make a GET request to the constructed URL.
             // Axios will throw an error for non-2xx responses, which will be caught.
             const response = await axios.get(requestUrl);
             return response.data;
         } catch (error) {
-            console.error('Error fetching product details:', error);
             // Re-throw the error to allow the caller to handle it.
             throw error;
         }

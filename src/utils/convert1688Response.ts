@@ -64,7 +64,7 @@ export default async function transform1688Product(apiResponse: any): Promise<an
             properties: skuKey,
             properties_name: propNames.sort().join(';'),
             quantity: sku.amountOnSale,
-            sku_id: sku.skuId.toString(),
+            sku_id: `${sku.skuId}-${sku.specId}`,
         };
     }
 

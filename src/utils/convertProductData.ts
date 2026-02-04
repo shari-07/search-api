@@ -36,14 +36,14 @@ export async function convertToProductData(
     if (!groups[propType]) {
       groups[propType] = {
         prop_type: propType,
-        prop_name: await translateIfChinese(propName),
+        prop_name: propName,
         prop_list: []
       };
     }
 
     groups[propType].prop_list.push({
       p_value: key,
-      p_name: await translateIfChinese(display),
+      p_name: display,
       p_sku_img: data.props_img[key] ?? ''
     });
   }
@@ -55,7 +55,7 @@ export async function convertToProductData(
   return {
     product_image_url: prefix + data.pic_url,
     product_image_list: imageList,
-    product_name: await translateIfChinese(data.title) || "No Title",
+    product_name: data.title || "No Title",
     product_link: data.detail_url,
     product_details: data.desc || '',
     product_freight_amount_cny: freightCNY,
@@ -76,11 +76,7 @@ export async function convertToProductData(
     item_size: '',
     sales: parseInt(data.sales ?? data.total_sold ?? '0'),
     store_id: parseInt(data.seller_id ?? '0'),
-    seller_name: data.seller_info?.nick
-      ? `${data.seller_info.nick} (${await translateIfChinese(
-          data.seller_info.nick
-        )})`
-      : data.nick,
+    seller_name: data.seller_info?.nick || data.nick,
     props_img: data.props_img,
     product_item_id: data.num_iid,
     api_time: Date.now(),

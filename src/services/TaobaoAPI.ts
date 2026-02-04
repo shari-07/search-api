@@ -17,31 +17,11 @@ interface TaobaoErrorResponse {
   };
 }
 
-/**
- * Defines the structure of a Taobao refresh token response.
- */
-interface TaobaoRefreshResponse {
-  code: string;
-  access_token: string;
-  refresh_token: string;
-  account_id: string;
-  user_Id: string;
-  account_platform: string;
-  refresh_expires_in: string;
-  error_code: string;
-  expires_in: string;
-  request_id: string;
-  seller_Id: string;
-  account: string;
-  short_code: string;
-}
-
 export default class TaobaoAPI {
   private appKey: string;
   private appSecret: string;
   private baseUrl: string;
   private accessToken: string;
-
 
   constructor(appKey: string, appSecret: string, accessToken: string) {
     if (!appKey || !appSecret) {
@@ -83,48 +63,8 @@ export default class TaobaoAPI {
       .toUpperCase();
   }
 
-    /**
-   * Refreshes the Taobao API access token using the refresh token.
-   
-    public async refreshAccessToken(): Promise<void> {
-      const url = "https://api.taobao.global/rest/auth/token/refresh";
-      const apiPath = "/auth/token/refresh";
-  
-      const params: TaobaoParams = {
-        app_key: this.appKey,
-        refresh_token: this.refreshToken || '',
-        sign_method: "sha256",
-        timestamp: Date.now().toString(),
-      };
-  
-      const signature = this.generateSignature(params, apiPath);
-      const fullParams = { ...params, sign: signature };
-  
-      try {
-        const response: AxiosResponse<TaobaoRefreshResponse> = await axios.post(url, null, {
-          params: fullParams,
-        });
-  
-        if (response.data.code !== "0") {
-          throw new Error(
-            `Failed to refresh token: [${response.data.error_code}] (Request ID: ${response.data.request_id})`
-          );
-        }
-  
-        this.accessToken = response.data.access_token;
-        this.refreshToken = response.data.refresh_token;
-  
-        console.log(":white_check_mark: Access token refreshed successfully.");
-      } catch (error: any) {
-        console.error(":x: Failed to refresh access token:", error.message);
-        throw error;
-      }
-    }
-    */
-
   /**
    * Makes a generic GET request to a Taobao API endpoint.
-   * Automatically refreshes the access token if it has expired.
    * @param apiPath The API path name (e.g., /traffic/item/get).
    * @param itemId The ID of the product.
    * @param platform The platform (e.g., 'taobao').
